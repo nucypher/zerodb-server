@@ -5,6 +5,8 @@ then
     virtualenv .venv
     source .venv/bin/activate
     pip install IPython
+    pip install loremipsum
+    pip install names
     pushd dist
     easy_install zerodb-0.8-py2.7.egg
     popd
