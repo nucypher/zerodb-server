@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+test.fs.*
+test.fs
+*.db
+*.db.*
+.ropeproject
+.coverage
+/.venv
+/dist/*.egg
