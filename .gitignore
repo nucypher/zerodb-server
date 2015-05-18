@@ -8,3 +8,5 @@ test.fs
 .coverage
 /.venv
 /dist/*.egg
+/server/db/db.fs*
+/activate
