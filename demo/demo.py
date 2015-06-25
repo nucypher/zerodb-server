@@ -3,7 +3,7 @@ from zerodb.query import *
 from models import Employee
 
 PASSPHRASE = "very insecure passphrase - never use it"
-SOCKET = "/tmp/zerosocket"
+SOCKET = ("localhost", 8001)
 
 db = zerodb.DB(SOCKET, username="root", password=PASSPHRASE)
 print len(db[Employee])
