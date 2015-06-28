@@ -8,7 +8,7 @@ then
     pip install loremipsum
     pip install names
     pushd dist
-    easy_install zerodb-0.89-py2.7.egg
+    easy_install zerodb-0.90-py2.7.egg
     popd
     ln -s .venv/bin/activate .
 else
