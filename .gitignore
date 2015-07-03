@@ -1,5 +1,6 @@
 *.pyc
 *.pyo
+*.swp
 test.fs.*
 test.fs
 *.db

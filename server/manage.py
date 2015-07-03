@@ -9,18 +9,20 @@ from IPython import embed
 from zerodb.crypto import AES
 from zerodb.storage import client_storage
 from zerodb.permissions import elliptic
+import logging
 
 
 @click.command()
 @click.option("--username", help="Admin username")
 @click.option("--passphrase", help="Admin passphrase or hex private key")
-@click.option("--sock", default="/tmp/zerosocket", help="Storage server socket (TCP or UNIX)")
+@click.option("--sock", default="localhost:8001", help="Storage server socket (TCP or UNIX)")
 def run(username, passphrase, sock):
+    logging.basicConfig()
     username = str(username)
     passphrase = str(passphrase)
     sock = str(sock)
     if not sock.startswith("/"):
-        sock = tuple(sock.split(":"))
+        sock = (sock.split(":")[0], int(sock.split(":")[1]))
     elliptic.register_auth()
 
     def useradd(username, password):
