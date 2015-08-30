@@ -6,6 +6,8 @@ PASSPHRASE = "very insecure passphrase - never use it"
 SOCKET = ("localhost", 8001)
 
 db = zerodb.DB(SOCKET, username="root", password=PASSPHRASE)
+print "Connected"
+
 print len(db[Employee])
 
 johns = db[Employee].query(name="John", limit=10)
