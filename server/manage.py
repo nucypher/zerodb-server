@@ -6,9 +6,9 @@ Management console
 
 import click
 from IPython import embed
-from zerodb.crypto import AES
+from zerodb import DB
 from zerodb.storage import client_storage
-from zerodb.permissions import elliptic
+from zerodb.transform import init_crypto
 import logging
 
 
@@ -23,7 +23,9 @@ def run(username, passphrase, sock):
     sock = str(sock)
     if not sock.startswith("/"):
         sock = (sock.split(":")[0], int(sock.split(":")[1]))
-    elliptic.register_auth()
+    DB.auth_module.register_auth()
+    DB.encrypter.register_class(default=True)
+    init_crypto(passphrase=passphrase)
 
     def useradd(username, password):
         storage.add_user(username, password)
@@ -39,11 +41,11 @@ def run(username, passphrase, sock):
     print "useradd(username, password) - add user"
     print "userdel(username) - remove user"
     print "chpass(username, password) - change passphrase"
+    print "exit() or ^D - exit"
 
     storage = client_storage(sock,
-            username=username, password=passphrase, realm="ZERO",
-            cipher=AES(passphrase=passphrase))
-    embed()
+            username=username, password=passphrase, realm="ZERO")
+    embed(display_banner=False)
 
 
 if __name__ == "__main__":
