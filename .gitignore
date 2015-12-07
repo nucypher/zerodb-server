@@ -10,3 +10,4 @@ test.fs
 /.venv
 /server/db/db.fs*
 /activate
+/api_server/*.pem

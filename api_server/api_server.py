@@ -11,11 +11,13 @@ DEFAULT_SECRET_KEY = "\xcf\xb94\x88\xe5\xea\xbf\xcb\x13\x1c!\xef\x96h>\xd8\xf8\x
 @click.option("--api-port", default=17234, help="Port for API", type=click.IntRange(0, 65535))
 @click.option("--zerodb-host", default="localhost", help="Host where ZeroDB server is running")
 @click.option("--zerodb-port", default=8001, help="Port where ZeroDB server is running", type=click.IntRange(0, 65535))
+@click.option("--certfile", default="cert.pem", help="SSL certificate file")
+@click.option("--keyfile", default="key.pem", help="SSL key file")
 @click.option("--models", default="models.py", help="File with models")
 @click.option("--session-key", help="Session key which should be random")
-def run(api_host, api_port, zerodb_host, zerodb_port, models, session_key):
+def run(api_host, api_port, zerodb_host, zerodb_port, certfile, keyfile, models, session_key):
     session_key = session_key or DEFAULT_SECRET_KEY
-    api.run(data_models=models, host=api_host, port=api_port, secret_key=session_key, debug=False, zeo_socket=(zerodb_host, zerodb_port))
+    api.run(data_models=models, host=api_host, port=api_port, ssl_context=(certfile, keyfile), secret_key=session_key, debug=False, zeo_socket=(zerodb_host, zerodb_port))
 
 
 if __name__ == "__main__":

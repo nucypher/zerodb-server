@@ -1,5 +1,14 @@
 #!/bin/bash
 
+if [ ! -e "api_server/cert.pem" ]
+then
+  echo "Generating new self-signed SSL certificates"
+  echo "Please complete the following..."
+  openssl ecparam -genkey -name secp256k1 -out api_server/key.pem
+  openssl req -new -key api_server/key.pem -out api_server/cert.pem -x509 -days 1000
+  echo "Self-signed SSL certificates generated"
+fi
+
 if [ ! -d ".venv" ]
 then
     virtualenv .venv
