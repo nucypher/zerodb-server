@@ -7,9 +7,7 @@ then
     pip install IPython
     pip install loremipsum
     pip install names
-    pushd dist
-    easy_install `ls -1 | tail -n 1`
-    popd
+    pip install zerodb
     ln -s .venv/bin/activate .
 else
     echo "All done already"
