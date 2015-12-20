@@ -10,3 +10,6 @@ test.fs
 /.venv
 /server/db/db.fs*
 /activate
+/dist
+/build
+/zerodb_server.egg-info
