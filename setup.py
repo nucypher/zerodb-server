@@ -17,7 +17,8 @@ setup(
     entry_points={
         "console_scripts": [
             "zerodb-server = zerodb.server.run:run",
-            "zerodb-manage = zerodb.server.manage:cli"
+            "zerodb-manage = zerodb.server.manage:cli",
+            "zerodb-api = zerodb.server.api:run"
             ]
         }
 )

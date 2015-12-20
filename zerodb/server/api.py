@@ -1,9 +1,8 @@
 #!/usr/bin/env python2
 
 import click
+from Crypto import Random
 from zerodb import api
-
-DEFAULT_SECRET_KEY = "\xcf\xb94\x88\xe5\xea\xbf\xcb\x13\x1c!\xef\x96h>\xd8\xf8\x9e\xad/y\xb0r\xce"
 
 
 @click.command()
@@ -14,7 +13,8 @@ DEFAULT_SECRET_KEY = "\xcf\xb94\x88\xe5\xea\xbf\xcb\x13\x1c!\xef\x96h>\xd8\xf8\x
 @click.option("--models", default="models.py", help="File with models")
 @click.option("--session-key", help="Session key which should be random")
 def run(api_host, api_port, zerodb_host, zerodb_port, models, session_key):
-    session_key = session_key or DEFAULT_SECRET_KEY
+    if not session_key:
+        session_key = Random.get_random_bytes(24)
     api.run(data_models=models, host=api_host, port=api_port, secret_key=session_key, debug=False, zeo_socket=(zerodb_host, zerodb_port))
 
 
