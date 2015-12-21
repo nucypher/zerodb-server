@@ -1,0 +1,30 @@
+Demo of how to use zerodb
+===========================
+
+1. Initialise database
+------------------------
+> zerodb-manage init_db
+> username [root]: <CR>
+> passphrase: very insecure passphrase - never use it
+
+Username is "root" by default, no need to type it. We use this "insecure passphrase" for the demo").
+
+File structure with configs and database get created.
+
+2. Run server
+---------------
+> zerodb-server
+
+3. Run demo
+--------------
+> python create.py
+
+Creates all the db demo records (requires loremipsum and names packages)
+
+> python demo.py
+
+Runs demo script
+
+> zerodb-api
+
+Runs json API
