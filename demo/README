@@ -1,6 +1,12 @@
 Demo of how to use zerodb
 ===========================
 
+0. Install demo
+-----------------
+> virtualenv .demo           # optional
+> source .demo/bin/activate  # optional
+> pip install -r requirements.txt
+
 1. Initialise database
 ------------------------
 > zerodb-manage init_db
