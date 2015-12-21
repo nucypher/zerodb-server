@@ -13,3 +13,5 @@ test.fs
 /dist
 /build
 /zerodb_server.egg-info
+/demo/db
+/demo/conf
