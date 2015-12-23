@@ -1,3 +1,5 @@
+# All extensions for zerodb are installed into this namespace package
+
 try:
     import pkg_resources
     pkg_resources.declare_namespace(__name__)
