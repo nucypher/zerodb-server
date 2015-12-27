@@ -108,8 +108,9 @@ def console():
 
 @cli.command()
 @click.option("--path", default=None, type=click.STRING, help="Path to db and configs")
+@click.option("--absolute-path/--no-absolute-path", default=False, help="Use absolute paths in configs")
 @auth_options
-def init_db(path):
+def init_db(path, absolute_path):
     """
     Initialize database if doesn't exist.
     Creates conf/ directory with config files and db/ with database files
@@ -119,6 +120,13 @@ def init_db(path):
             raise IOError("Path provided doesn't exist")
     else:
         path = os.getcwd()
+
+    if absolute_path:
+        authdb_path = os.path.join(path, "conf", "authdb.conf")
+        dbfile_path = os.path.join(path, "db", "db.fs")
+    else:
+        authdb_path = os.path.join("conf", "authdb.conf")
+        dbfile_path = os.path.join("db", "db.fs")
 
     conf_dir = os.path.join(path, "conf")
     db_dir = os.path.join(path, "db")
@@ -139,8 +147,8 @@ def init_db(path):
             passphrase=key)
     zcml_content = ZEO_TEMPLATE.format(
             sock=_sock if isinstance(_sock, basestring) else "{0}:{1}".format(*_sock),
-            authdb=os.path.join("conf", "authdb.conf"),
-            dbfile=os.path.join("db", "db.fs"))
+            authdb=authdb_path,
+            dbfile=dbfile_path)
 
     with open(authdb_conf, "w") as f:
         f.write(authdb_content)
