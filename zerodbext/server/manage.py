@@ -61,8 +61,12 @@ def auth_options(f):
         if passphrase:
             _passphrase = str(passphrase)
         else:
-            _passphrase = str(click.prompt("Passphrase", hide_input=True))
-
+            while True:
+                _passphrase = str(click.prompt("Passphrase", hide_input=True))
+                _passphrase1 = str(click.prompt("Passphrase input again", hide_input=True))
+                if _passphrase == _passphrase1:
+                    break
+                    
         if sock.startswith("/"):
             _sock = sock
         else:
