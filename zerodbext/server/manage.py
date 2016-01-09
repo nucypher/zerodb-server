@@ -52,9 +52,9 @@ def auth_options(f):
         global _username
         global _passphrase
         global _sock
-        
-        _username=str(username)
-        _passphrase=str(passphrase)
+
+        _username = str(username)
+        _passphrase = str(passphrase)
 
         if sock.startswith("/"):
             _sock = sock
