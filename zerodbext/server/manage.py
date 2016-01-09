@@ -44,24 +44,17 @@ def cli():
 
 def auth_options(f):
     """Decorator to enable username, passphrase and sock options to command"""
-    @click.option("--username", default=None, type=click.STRING, help="Admin username")
-    @click.option("--passphrase", default=None, type=click.STRING, help="Admin passphrase or hex private key")
-    @click.option("--sock", default="localhost:8001", type=click.STRING, help="Storage server socket (TCP or UNIX)")
+    @click.option("--username", prompt="Username", default="root", type=click.STRING, help="Admin username")
+    @click.option("--passphrase", prompt="Passphrase", hide_input=True, confirmation_prompt=True, type=click.STRING, help="Admin passphrase or hex private key")
+    @click.option("--sock", prompt="Sock", default="localhost:8001", type=click.STRING, help="Storage server socket (TCP or UNIX)")
     @click.pass_context
     def auth_func(ctx, username, passphrase, sock, *args, **kw):
         global _username
         global _passphrase
         global _sock
 
-        if username:
-            _username = str(username)
-        else:
-            _username = str(click.prompt("Username", default="root"))
-
-        if passphrase:
-            _passphrase = str(passphrase)
-        else:
-            _passphrase = str(click.prompt("Passphrase", hide_input=True))
+        _username = str(username)
+        _passphrase = str(passphrase)
 
         if sock.startswith("/"):
             _sock = sock
