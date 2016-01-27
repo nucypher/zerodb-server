@@ -34,6 +34,7 @@ ZEO_TEMPLATE = """<zeo>
 
 <filestorage>
   path {dbfile}
+  pack-gc false
 </filestorage>"""
 
 
@@ -42,10 +43,10 @@ def cli():
     pass
 
 
-def auth_options(f):
+def _auth_options(f, confirm_passphrase=True):
     """Decorator to enable username, passphrase and sock options to command"""
     @click.option("--username", prompt="Username", default="root", type=click.STRING, help="Admin username")
-    @click.option("--passphrase", prompt="Passphrase", hide_input=True, confirmation_prompt=True, type=click.STRING, help="Admin passphrase or hex private key")
+    @click.option("--passphrase", prompt="Passphrase", hide_input=True, confirmation_prompt=confirm_passphrase, type=click.STRING, help="Admin passphrase or hex private key")
     @click.option("--sock", prompt="Sock", default="localhost:8001", type=click.STRING, help="Storage server socket (TCP or UNIX)")
     @click.pass_context
     def auth_func(ctx, username, passphrase, sock, *args, **kw):
@@ -63,6 +64,14 @@ def auth_options(f):
             _sock = (str(sock[0]), int(sock[1]))
         ctx.invoke(f, *args, **kw)
     return update_wrapper(auth_func, f)
+
+
+def signup_options(f):
+    return _auth_options(f, confirm_passphrase=True)
+
+
+def auth_options(f):
+    return _auth_options(f, confirm_passphrase=False)
 
 
 @cli.command()
@@ -102,7 +111,7 @@ def console():
 @cli.command()
 @click.option("--path", default=None, type=click.STRING, help="Path to db and configs")
 @click.option("--absolute-path/--no-absolute-path", default=False, help="Use absolute paths in configs")
-@auth_options
+@signup_options
 def init_db(path, absolute_path):
     """
     Initialize database if doesn't exist.
