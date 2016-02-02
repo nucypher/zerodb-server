@@ -1,2 +1,2 @@
-ipython==4.1.0rc1
-zerodb==0.96.9
+ipython==4.1.0rc2
+zerodb==0.96.11
