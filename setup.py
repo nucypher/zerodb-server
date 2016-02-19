@@ -2,11 +2,12 @@ from setuptools import setup, find_packages
 
 INSTALL_REQUIRES = [
     'ipython',
+    'click',
     'zerodb']
 
 setup(
     name="zerodb-server",
-    version="0.1.10",
+    version="0.1.11",
     description="ZeroDB server",
     author="ZeroDB Inc.",
     author_email="michael@zerodb.io",
