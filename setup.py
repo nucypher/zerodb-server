@@ -7,7 +7,7 @@ INSTALL_REQUIRES = [
 
 setup(
     name="zerodb-server",
-    version="0.1.14",
+    version="0.1.15",
     description="ZeroDB server",
     author="ZeroDB Inc.",
     author_email="michael@zerodb.io",
@@ -16,11 +16,13 @@ setup(
     packages=find_packages(),
     namespace_packages=["zerodbext"],
     install_requires=INSTALL_REQUIRES,
-    entry_points={
-        "console_scripts": [
+    entry_points=
+    {
+        "console_scripts":
+        [
             "zerodb-server = zerodbext.server.run:run",
             "zerodb-manage = zerodbext.server.manage:cli",
             "zerodb-api = zerodbext.server.api:run"
-            ]
-        }
+        ]
+    }
 )
