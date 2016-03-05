@@ -7,7 +7,7 @@ INSTALL_REQUIRES = [
 
 setup(
     name="zerodb-server",
-    version="0.1.15",
+    version="0.1.16",
     description="ZeroDB server",
     author="ZeroDB Inc.",
     author_email="michael@zerodb.io",
