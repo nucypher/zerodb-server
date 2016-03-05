@@ -6,20 +6,20 @@ PASSPHRASE = "very insecure passphrase - never use it"
 SOCKET = ("localhost", 8001)
 
 db = zerodb.DB(SOCKET, username="root", password=PASSPHRASE)
-print "Connected"
+print("Connected")
 
-print len(db[Employee])
+print(len(db[Employee]))
 
 johns = db[Employee].query(name="John", limit=10)
-print len(johns)
-print johns
+print(len(johns))
+print(johns)
 
 rich_johns = db[Employee].query(InRange("salary", 195000, 200000), name="John")
-print len(rich_johns)
-print rich_johns
+print(len(rich_johns))
+print(rich_johns)
 
 uk = db[Employee].query(Contains("description", "United Kingdom"))
-print len(uk)
+print(len(uk))
 if uk:
-    print uk[0]
-    print uk[0].description
+    print(uk[0])
+    print(uk[0].description)

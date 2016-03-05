@@ -8,6 +8,8 @@ import click
 import logging
 
 import os.path
+
+import six
 from IPython import embed
 from functools import update_wrapper
 
@@ -143,12 +145,16 @@ def init_db(path, absolute_path):
     if not os.path.exists(db_dir):
         os.mkdir(db_dir)
 
-    key = ecc.private(_passphrase).get_pubkey().encode("hex")
+    key = ecc.private(_passphrase).get_pubkey()
+    if six.PY2:
+        key = key.encode('hex')
+    else:
+        key = key.hex()
     authdb_content = PERMISSIONS_TEMPLATE.format(
             username=_username,
             passphrase=key)
     zcml_content = ZEO_TEMPLATE.format(
-            sock=_sock if isinstance(_sock, basestring) else "{0}:{1}".format(*_sock),
+            sock=_sock if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock),
             authdb=authdb_path,
             dbfile=dbfile_path)
 

@@ -3,7 +3,9 @@ from setuptools import setup, find_packages
 INSTALL_REQUIRES = [
     'ipython',
     'click',
-    'zerodb']
+    'zerodb',
+    'six'
+]
 
 setup(
     name="zerodb-server",
