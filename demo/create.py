@@ -15,11 +15,11 @@ db = zerodb.DB(("localhost", 8001), username=username, password=passphrase)
 # Everything we record should be within a transaction manager
 # or be ended with transaction.commit()
 with transaction.manager:
-    for i in xrange(10000):
+    for i in range(10000):
         if (i % 100) == 0:
             # Random text generation is slow, so we report
             # about progress here
-            print i
+            print(i)
         e = models.Employee(name=names.get_first_name(),
                             surname=names.get_last_name(),
                             salary=random.randrange(200000),
