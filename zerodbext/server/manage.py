@@ -6,6 +6,7 @@ Management console
 
 import click
 import logging
+import subprocess
 
 import os.path
 
@@ -38,6 +39,43 @@ ZEO_TEMPLATE = """<zeo>
   path {dbfile}
   pack-gc false
 </filestorage>"""
+
+STUNNEL_SERVER_TEMPLATE = """\
+; stunnel config for ZeroDB server
+; https://www.stunnel.org/static/stunnel.html
+
+; PID file, path must be absolute
+pid = {pidfile}
+
+[zerodb-server]
+; Listen on all interfaces
+accept = {accept}
+; Forward to ZeroDB server on localhost
+connect = {connect}
+; TLS server certificate and key files
+cert = {certfile}
+key = {keyfile}
+"""
+
+STUNNEL_CLIENT_TEMPLATE = """\
+; stunnel config for ZeroDB client
+; https://www.stunnel.org/static/stunnel.html
+
+; PID file, path must be absolute
+pid = {pidfile}
+
+[zerodb-client]
+; Operate in client mode
+client = yes
+; Listen on localhost
+accept = {accept}
+; Forward to remote ZeroDB server
+connect = {connect}
+; Authenticate against local copy
+; of server certificate
+CAfile = {certfile}
+verify = 4
+"""
 
 
 @click.group()
@@ -113,8 +151,9 @@ def console():
 @cli.command()
 @click.option("--path", default=None, type=click.STRING, help="Path to db and configs")
 @click.option("--absolute-path/--no-absolute-path", default=False, help="Use absolute paths in configs")
+@click.option("--stunnel/--no-stunnel", default=False, help="Create stunnel config files")
 @signup_options
-def init_db(path, absolute_path):
+def init_db(path, absolute_path, stunnel):
     """
     Initialize database if doesn't exist.
     Creates conf/ directory with config files and db/ with database files
@@ -128,41 +167,105 @@ def init_db(path, absolute_path):
     if absolute_path:
         authdb_path = os.path.join(path, "conf", "authdb.conf")
         dbfile_path = os.path.join(path, "db", "db.fs")
+        certfile_path = os.path.join(path, "conf", "server.crt")
+        keyfile_path = os.path.join(path, "conf", "server.key")
     else:
         authdb_path = os.path.join("conf", "authdb.conf")
         dbfile_path = os.path.join("db", "db.fs")
+        certfile_path = os.path.join("conf", "server.crt")
+        keyfile_path = os.path.join("conf", "server.key")
 
     conf_dir = os.path.join(path, "conf")
     db_dir = os.path.join(path, "db")
+    var_dir = os.path.join(path, "var")
     authdb_conf = os.path.join(conf_dir, "authdb.conf")
     zcml_conf = os.path.join(conf_dir, "server.zcml")
+    certfile = os.path.join(conf_dir, "server.crt")
+    keyfile = os.path.join(conf_dir, "server.key")
+    stunnel_server_conf = os.path.join(conf_dir, "stunnel-server.conf")
+    stunnel_client_conf = os.path.join(conf_dir, "stunnel-client.conf")
 
     if os.path.exists(authdb_conf) or os.path.exists(zcml_conf):
-        raise IOError("Config files already exist, remove them or edit")
+        click.echo("Config files already exist, remove to recreate")
 
     if not os.path.exists(conf_dir):
         os.mkdir(conf_dir)
     if not os.path.exists(db_dir):
         os.mkdir(db_dir)
 
+    if stunnel:
+        if not os.path.exists(var_dir):
+            os.mkdir(var_dir)
+
     key = ecc.private(_passphrase).get_pubkey()
     if six.PY2:
         key = key.encode('hex')
     else:
         key = key.hex()
+
+    sock = _sock if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock)
+
     authdb_content = PERMISSIONS_TEMPLATE.format(
             username=_username,
             passphrase=key)
+
     zcml_content = ZEO_TEMPLATE.format(
-            sock=_sock if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock),
+            sock=sock,
             authdb=authdb_path,
             dbfile=dbfile_path)
 
-    with open(authdb_conf, "w") as f:
-        f.write(authdb_content)
+    stunnel_server_content = STUNNEL_SERVER_TEMPLATE.format(
+            pidfile=os.path.join(path, "var", "stunnel-server.pid"),
+            accept="9001",
+            connect=sock,
+            certfile=certfile_path,
+            keyfile=keyfile_path)
 
-    with open(zcml_conf, "w") as f:
-        f.write(zcml_content)
+    stunnel_client_content = STUNNEL_CLIENT_TEMPLATE.format(
+            pidfile="<"+os.path.join(os.sep, "path", "to", "stunnel-client.pid")+">",
+            accept=sock,
+            connect="<server address>:9001",
+            certfile="<"+os.path.join(os.sep, "path", "to", "server.crt")+">")
+
+    if os.path.exists(authdb_conf):
+        click.echo("Skipping " + authdb_conf)
+    else:
+        with open(authdb_conf, "w") as f:
+            f.write(authdb_content)
+
+    if os.path.exists(zcml_conf):
+        click.echo("Skipping " + zcml_conf)
+    else:
+        with open(zcml_conf, "w") as f:
+            f.write(zcml_content)
+
+    if stunnel:
+        if os.path.exists(stunnel_server_conf):
+            click.echo("Skipping " + stunnel_server_conf)
+        else:
+            with open(stunnel_server_conf, "w") as f:
+                f.write(stunnel_server_content)
+
+        if os.path.exists(stunnel_client_conf):
+            click.echo("Skipping " + stunnel_client_conf)
+        else:
+            with open(stunnel_client_conf, "w") as f:
+                f.write(stunnel_client_content)
+
+    if stunnel:
+        if os.path.exists(keyfile):
+            click.echo("Skipping " + keyfile)
+        else:
+            subprocess.call('umask 077; openssl ecparam -genkey -name secp256k1 -out "{0}"'.format(
+                keyfile), shell=True)
+            if os.path.exists(certfile):
+                os.remove(certfile)
+
+        if os.path.exists(certfile):
+            click.echo("Skipping " + certfile)
+        else:
+            subprocess.call('openssl req -new -key "{0}" -out "{1}" -x509 -days 1000'.format(
+                keyfile, certfile), shell=True)
 
     click.echo("Config files created, you can start zerodb-server")
 
