@@ -40,6 +40,13 @@ ZEO_TEMPLATE = """<zeo>
   pack-gc false
 </filestorage>"""
 
+STUNNEL_SECTION = """
+
+<stunnel>
+  stunnel-config {stunnel}
+</stunnel>
+"""
+
 STUNNEL_SERVER_TEMPLATE = """\
 ; stunnel config for ZeroDB server
 ; https://www.stunnel.org/static/stunnel.html
@@ -172,11 +179,13 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
         dbfile_path = os.path.join(path, "db", "db.fs")
         certfile_path = os.path.join(path, "conf", "server.crt")
         keyfile_path = os.path.join(path, "conf", "server.key")
+        stunnel_server_path = os.path.join(path, "conf", "stunnel-server.conf")
     else:
         authdb_path = os.path.join("conf", "authdb.conf")
         dbfile_path = os.path.join("db", "db.fs")
         certfile_path = os.path.join("conf", "server.crt")
         keyfile_path = os.path.join("conf", "server.key")
+        stunnel_server_path = os.path.join("conf", "stunnel-server.conf")
 
     server_pidfile_path = os.path.join(path, "var", "stunnel-server.pid")
     client_pidfile_path = os.path.join(path, "var", "stunnel-client.pid")
@@ -232,6 +241,9 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
             authdb=authdb_path,
             dbfile=dbfile_path)
 
+    stunnel_section_content = STUNNEL_SECTION.format(
+            stunnel=stunnel_server_path)
+
     stunnel_server_content = STUNNEL_SERVER_TEMPLATE.format(
             pidfile=server_pidfile_path,
             accept=server_accept,
@@ -256,6 +268,8 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
     else:
         with open(zcml_conf, "w") as f:
             f.write(zcml_content)
+            if stunnel:
+                f.write(stunnel_section_content)
 
     if stunnel:
         if os.path.exists(stunnel_server_conf):
