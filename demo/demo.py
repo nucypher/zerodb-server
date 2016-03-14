@@ -2,10 +2,24 @@ import zerodb
 from zerodb.query import *
 from models import Employee
 
+# Setup logging
+import logging
+logging.basicConfig()
+
+# Start client end of TLS tunnel
+from pystunnel import Stunnel
+stunnel = Stunnel("conf/stunnel-client.conf")
+rc = stunnel.start()
+print("stunnel started with rc %d" % rc)
+import atexit
+atexit.register(stunnel.stop)
+
+# Open ZeroDB connection
+USERNAME = "root"
 PASSPHRASE = "very insecure passphrase - never use it"
 SOCKET = ("localhost", 8001)
 
-db = zerodb.DB(SOCKET, username="root", password=PASSPHRASE)
+db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE)
 print("Connected")
 
 print(len(db[Employee]))
