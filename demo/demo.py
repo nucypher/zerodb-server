@@ -16,8 +16,8 @@ atexit.register(stunnel.stop)
 
 # Open ZeroDB connection
 USERNAME = "root"
-PASSPHRASE = "very insecure passphrase - never use it"
-SOCKET = ("localhost", 8001)
+PASSPHRASE = "123"
+SOCKET = ("localhost", 8002)
 
 db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE)
 print("Connected")
