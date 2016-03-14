@@ -18,17 +18,6 @@ elliptic.register_auth()
 @click.command()
 @click.option("--confpath", default=DEFAULT_CONF_PATH, help="Path to config file")
 def run(confpath):
-
-    # Simplest possible way to launch stunnel
-    STUNNEL_CONF_PATH = path.join(getcwd(), "conf", "stunnel-server.conf")
-    if path.exists(STUNNEL_CONF_PATH):
-        from pystunnel import Stunnel
-        stunnel = Stunnel(STUNNEL_CONF_PATH)
-        rc = stunnel.start()
-        print("stunnel started with rc %d" % rc)
-        import atexit
-        atexit.register(stunnel.stop)
-
     ZEOServer.run(["-C", confpath])
 
 
