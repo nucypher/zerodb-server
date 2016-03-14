@@ -1,4 +1,4 @@
 click
 ipython==4.1.2
 six
-zerodb==0.97.1
+zerodb==0.97.2
