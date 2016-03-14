@@ -151,13 +151,16 @@ def console():
 @cli.command()
 @click.option("--path", default=None, type=click.STRING, help="Path to db and configs")
 @click.option("--absolute-path/--no-absolute-path", default=False, help="Use absolute paths in configs")
-@click.option("--stunnel/--no-stunnel", default=False, help="Create stunnel config files")
+@click.option("--stunnel-server", default=None, type=click.STRING, help="stunnel server address:port")
+@click.option("--stunnel-client", default=None, type=click.STRING, help="stunnel client address:port")
 @signup_options
-def init_db(path, absolute_path, stunnel):
+def init_db(path, absolute_path, stunnel_server, stunnel_client):
     """
     Initialize database if doesn't exist.
     Creates conf/ directory with config files and db/ with database files
     """
+    stunnel = stunnel_server is not None or stunnel_client is not None
+
     if path:
         if not os.path.exists(path):
             raise IOError("Path provided doesn't exist")
@@ -204,6 +207,16 @@ def init_db(path, absolute_path, stunnel):
         key = key.hex()
 
     sock = _sock if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock)
+    server_accept = "9001"
+    server_connect = "<server address>:9001"
+    client_accept = sock
+
+    if stunnel:
+        if stunnel_server is not None:
+            server_accept = stunnel_server.split(":")[1]
+            server_connect = stunnel_server
+        if stunnel_client is not None:
+            client_accept = stunnel_client
 
     authdb_content = PERMISSIONS_TEMPLATE.format(
             username=_username,
@@ -216,15 +229,15 @@ def init_db(path, absolute_path, stunnel):
 
     stunnel_server_content = STUNNEL_SERVER_TEMPLATE.format(
             pidfile=os.path.join(path, "var", "stunnel-server.pid"),
-            accept="9001",
+            accept=server_accept,
             connect=sock,
             certfile=certfile_path,
             keyfile=keyfile_path)
 
     stunnel_client_content = STUNNEL_CLIENT_TEMPLATE.format(
             pidfile="<"+os.path.join(os.sep, "path", "to", "stunnel-client.pid")+">",
-            accept=sock,
-            connect="<server address>:9001",
+            accept=client_accept,
+            connect=server_connect,
             certfile="<"+os.path.join(os.sep, "path", "to", "server.crt")+">")
 
     if os.path.exists(authdb_conf):
