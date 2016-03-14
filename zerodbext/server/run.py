@@ -18,10 +18,6 @@ elliptic.register_auth()
 @click.command()
 @click.option("--confpath", default=DEFAULT_CONF_PATH, help="Path to config file")
 def run(confpath):
-    ZEOServer.run(["-C", confpath])
-
-
-if __name__ == "__main__":
 
     # Simplest possible way to launch stunnel
     STUNNEL_CONF_PATH = path.join(getcwd(), "conf", "stunnel-server.conf")
@@ -33,4 +29,8 @@ if __name__ == "__main__":
         import atexit
         atexit.register(stunnel.stop)
 
+    ZEOServer.run(["-C", confpath])
+
+
+if __name__ == "__main__":
     run()
