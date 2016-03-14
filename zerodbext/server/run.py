@@ -22,4 +22,15 @@ def run(confpath):
 
 
 if __name__ == "__main__":
+
+    # Simplest possible way to launch stunnel
+    STUNNEL_CONF_PATH = path.join(getcwd(), "conf", "stunnel-server.conf")
+    if path.exists(STUNNEL_CONF_PATH):
+        from pystunnel import Stunnel
+        stunnel = Stunnel(STUNNEL_CONF_PATH)
+        rc = stunnel.start()
+        print("stunnel started with rc %d" % rc)
+        import atexit
+        atexit.register(stunnel.stop)
+
     run()
