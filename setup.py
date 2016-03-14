@@ -4,7 +4,8 @@ INSTALL_REQUIRES = [
     'ipython',
     'click',
     'zerodb',
-    'six'
+    'six',
+    'pystunnel'
 ]
 
 setup(
