@@ -243,7 +243,7 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
             pidfile=client_pidfile_path if demo else "<"+os.path.join(os.sep, "path", "to", "stunnel-client.pid")+">",
             accept=client_accept,
             connect=server_connect,
-            certfile=os.path.abspath(certfile_path) if demo else "<"+os.path.join(os.sep, "path", "to", "server.crt")+">")
+            certfile=certfile_path if demo else "<"+os.path.join(os.sep, "path", "to", "server.crt")+">")
 
     if os.path.exists(authdb_conf):
         click.echo("Skipping " + authdb_conf)
