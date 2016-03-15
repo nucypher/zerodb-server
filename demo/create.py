@@ -7,16 +7,36 @@ import names
 import loremipsum
 import random
 
-username = "root"
-passphrase = "very insecure passphrase - never use it"
+# Setup logging
+import logging
+logging.basicConfig()
 
-db = zerodb.DB(("localhost", 8001), username=username, password=passphrase)
+# Start client end of TLS tunnel
+from pystunnel import Stunnel
+stunnel = Stunnel("conf/stunnel-client.conf")
+rc = stunnel.start()
+print("stunnel started with rc %d" % rc)
+import atexit
+atexit.register(stunnel.stop)
+
+# Open ZeroDB connection
+USERNAME = "root"
+PASSPHRASE = "123"
+SOCKET = ("localhost", 8002)
+
+db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE)
+print("Connected")
+
+# Create objects
+NUMOBJECTS = 1000
+REPORTFREQ = 100
 
 # Everything we record should be within a transaction manager
 # or be ended with transaction.commit()
+print("Creating %d objects" % NUMOBJECTS)
 with transaction.manager:
-    for i in range(10000):
-        if (i % 100) == 0:
+    for i in range(NUMOBJECTS):
+        if i % REPORTFREQ == 0 and i != 0:
             # Random text generation is slow, so we report
             # about progress here
             print(i)
@@ -36,6 +56,7 @@ Stephen William Hawking resides in the United Kingdom."""
                         salary=400000,
                         description=desc)
     db.add(e)  # Don't forget to add created object to the db
+    print("Committing")
 
 # This is not really necessary
 db.disconnect()
