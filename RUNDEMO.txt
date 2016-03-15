@@ -1,0 +1,21 @@
+git clone git@github.com:zero-db/zerodb-server
+cd zerodb-server
+git checkout stunnel-simple-demo
+
+virtualenv-2.7 .
+./bin/python setup.py develop
+./bin/pip install -r demo/requirements.txt
+
+./bin/zerodb-manage init_db \
+	--username=root \
+	--passphrase=123 \
+	--sock=localhost:8001 \
+	--stunnel-client=localhost:8002 \
+	--stunnel-server=localhost:9001
+
+First terminal:
+./bin/zerodb-server
+
+Second terminal:
+./bin/python demo/create.py
+./bin/python demo/demo.py
