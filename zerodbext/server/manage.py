@@ -178,6 +178,9 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
         certfile_path = os.path.join("conf", "server.crt")
         keyfile_path = os.path.join("conf", "server.key")
 
+    server_pidfile_path = os.path.join(path, "var", "stunnel-server.pid")
+    client_pidfile_path = os.path.join(path, "var", "stunnel-client.pid")
+
     conf_dir = os.path.join(path, "conf")
     db_dir = os.path.join(path, "db")
     var_dir = os.path.join(path, "var")
@@ -218,6 +221,8 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
         if stunnel_client is not None:
             client_accept = stunnel_client
 
+    demo = server_connect.startswith(("localhost", "127.0.0.1"))
+
     authdb_content = PERMISSIONS_TEMPLATE.format(
             username=_username,
             passphrase=key)
@@ -228,17 +233,17 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
             dbfile=dbfile_path)
 
     stunnel_server_content = STUNNEL_SERVER_TEMPLATE.format(
-            pidfile=os.path.join(path, "var", "stunnel-server.pid"),
+            pidfile=server_pidfile_path,
             accept=server_accept,
             connect=sock,
             certfile=certfile_path,
             keyfile=keyfile_path)
 
     stunnel_client_content = STUNNEL_CLIENT_TEMPLATE.format(
-            pidfile="<"+os.path.join(os.sep, "path", "to", "stunnel-client.pid")+">",
+            pidfile=client_pidfile_path if demo else "<"+os.path.join(os.sep, "path", "to", "stunnel-client.pid")+">",
             accept=client_accept,
             connect=server_connect,
-            certfile="<"+os.path.join(os.sep, "path", "to", "server.crt")+">")
+            certfile=os.path.abspath(certfile_path) if demo else "<"+os.path.join(os.sep, "path", "to", "server.crt")+">")
 
     if os.path.exists(authdb_conf):
         click.echo("Skipping " + authdb_conf)
