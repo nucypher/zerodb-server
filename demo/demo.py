@@ -6,20 +6,13 @@ from models import Employee
 import logging
 logging.basicConfig()
 
-# Start client end of TLS tunnel
-from pystunnel import Stunnel
-stunnel = Stunnel("conf/stunnel-client.conf")
-rc = stunnel.start()
-print("stunnel started with rc %d" % rc)
-import atexit
-atexit.register(stunnel.stop)
-
 # Open ZeroDB connection
 USERNAME = "root"
 PASSPHRASE = "123"
 SOCKET = ("localhost", 8002)
+STUNNEL_CONFIG = "conf/stunnel-client.conf"
 
-db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE)
+db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE, stunnel_config=STUNNEL_CONFIG)
 print("Connected")
 
 print(len(db[Employee]))
