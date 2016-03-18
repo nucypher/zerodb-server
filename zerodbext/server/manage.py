@@ -7,6 +7,7 @@ Management console
 import click
 import logging
 import subprocess
+import re
 
 import os.path
 
@@ -24,6 +25,8 @@ logging.basicConfig()
 _username = None
 _passphrase = None
 _sock = None
+
+re_hostport = re.compile(r"(?:(.+):){0,1}(\d+)$")
 
 PERMISSIONS_TEMPLATE = """realm ZERO
 {username}:{passphrase}"""
@@ -104,11 +107,11 @@ def _auth_options(f, confirm_passphrase=True):
         _username = str(username)
         _passphrase = str(passphrase)
 
-        if sock.startswith("/"):
-            _sock = sock
+        match = re_hostport.match(sock)
+        if match:
+            _sock = (str(match.group(1) or ""), int(match.group(2), 10))
         else:
-            sock = sock.split(":")
-            _sock = (str(sock[0]), int(sock[1]))
+            _sock = sock
         ctx.invoke(f, *args, **kw)
     return update_wrapper(auth_func, f)
 
@@ -168,12 +171,15 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
     """
     stunnel = stunnel_server is not None or stunnel_client is not None
 
+    # Base path
     if path:
         if not os.path.exists(path):
             raise IOError("Path provided doesn't exist")
+        path = os.path.abspath(path)
     else:
         path = os.getcwd()
 
+    # Paths to be put into config files
     if absolute_path:
         authdb_path = os.path.join(path, "conf", "authdb.conf")
         dbfile_path = os.path.join(path, "db", "db.fs")
@@ -187,9 +193,11 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
         keyfile_path = os.path.join("conf", "server.key")
         stunnel_server_path = os.path.join("conf", "stunnel-server.conf")
 
+    # stunnel pidfile paths must be absolute
     server_pidfile_path = os.path.join(path, "var", "stunnel-server.pid")
     client_pidfile_path = os.path.join(path, "var", "stunnel-client.pid")
 
+    # Directories and files to create
     conf_dir = os.path.join(path, "conf")
     db_dir = os.path.join(path, "db")
     var_dir = os.path.join(path, "var")
@@ -212,25 +220,47 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
         if not os.path.exists(var_dir):
             os.mkdir(var_dir)
 
+    # Encode passphrase
     key = ecc.private(_passphrase).get_pubkey()
     if six.PY2:
         key = key.encode('hex')
     else:
         key = key.hex()
 
-    sock = _sock if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock)
+    # Sockets
+    if isinstance(_sock, tuple):
+        sock = "{0}:{1}".format(*_sock)
+    elif absolute_path:
+        sock = os.path.join(path, _sock)
+    else:
+        sock = _sock
+
+    db_connect = sock
     server_accept = "9001"
     server_connect = "<server address>:9001"
     client_accept = sock
 
     if stunnel:
         if stunnel_server is not None:
-            server_accept = stunnel_server.split(":")[1]
+            match = re_hostport.match(stunnel_server)
+            server_accept = match.group(2) if match else stunnel_server
             server_connect = stunnel_server
         if stunnel_client is not None:
             client_accept = stunnel_client
 
-    demo = server_connect.startswith(("localhost", "127.0.0.1"))
+    # stunnel unix-socket paths must be absolute
+    if not re_hostport.match(db_connect):
+        db_connect = os.path.join(path, db_connect)
+    if not re_hostport.match(server_accept):
+        server_accept = os.path.join(path, server_accept)
+    if not re_hostport.match(server_connect):
+        server_connect = os.path.join(path, server_connect)
+    if not re_hostport.match(client_accept):
+        client_accept = os.path.join(path, client_accept)
+
+    # Enable demo mode when stunnel server listens on unix-socket or localhost
+    match = re_hostport.match(server_connect)
+    demo = not match or match.group(1).startswith("localhost") or match.group(1) == "127.0.0.1"
 
     authdb_content = PERMISSIONS_TEMPLATE.format(
             username=_username,
@@ -247,7 +277,7 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
     stunnel_server_content = STUNNEL_SERVER_TEMPLATE.format(
             pidfile=server_pidfile_path,
             accept=server_accept,
-            connect=sock,
+            connect=db_connect,
             certfile=certfile_path,
             keyfile=keyfile_path)
 
