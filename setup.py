@@ -24,6 +24,7 @@ setup(
         "console_scripts":
         [
             "zerodb-server = zerodbext.server.run:run",
+            "zerodb-proxy = zerodbext.server.proxy:run",
             "zerodb-manage = zerodbext.server.manage:cli",
             "zerodb-api = zerodbext.server.api:run"
         ]
