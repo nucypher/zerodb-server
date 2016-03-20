@@ -1,6 +1,11 @@
+#
+# Start a ZEOProxy on the client machine. Applications simply connect
+# to the proxy and do not need to know about stunnel at all.
+#
+
 git clone git@github.com:zero-db/zerodb-server
 cd zerodb-server
-git checkout stunnel-zcml-demo
+git checkout stunnel-proxy-demo
 virtualenv-2.7 .
 ./bin/python setup.py develop
 ./bin/pip install -r demo/requirements.txt
@@ -8,7 +13,7 @@ virtualenv-2.7 .
 cd ..
 git clone git@github.com:zero-db/zerodb
 cd zerodb
-git checkout stunnel-zcml
+git checkout stunnel-proxy
 virtualenv-2.7 .
 ./bin/python setup.py develop
 ../zerodb-server/bin/python setup.py develop
@@ -17,13 +22,16 @@ cd ../zerodb-server
 ./bin/zerodb-manage init_db \
 	--username=root \
 	--passphrase=123 \
-	--sock=localhost:8001 \
-	--stunnel-client=localhost:8002 \
-	--stunnel-server=localhost:9001
+	--sock=var/zerodb-server.sock \
+	--stunnel-server=localhost:9001 \
+	--stunnel-client=localhost:8001
 
 First terminal:
 ./bin/zerodb-server
 
 Second terminal:
+./bin/zerodb-proxy
+
+Third terminal:
 ./bin/python demo/create.py
 ./bin/python demo/demo.py
