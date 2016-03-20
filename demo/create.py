@@ -14,10 +14,9 @@ logging.basicConfig()
 # Open ZeroDB connection
 USERNAME = "root"
 PASSPHRASE = "123"
-SOCKET = ("localhost", 8002)
-STUNNEL_CONFIG = "conf/stunnel-client.conf"
+SOCKET = ("localhost", 8001)
 
-db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE, stunnel_config=STUNNEL_CONFIG)
+db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE)
 print("Connected")
 
 # Create objects
