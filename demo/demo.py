@@ -9,7 +9,7 @@ logging.basicConfig()
 # Open ZeroDB connection
 USERNAME = "root"
 PASSPHRASE = "123"
-SOCKET = ("localhost", 8002)
+SOCKET = ("localhost", 8001)
 STUNNEL_CONFIG = "conf/stunnel-client.conf"
 
 db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE, stunnel_config=STUNNEL_CONFIG)
