@@ -31,7 +31,8 @@ re_hostport = re.compile(r"(?:(.+):){0,1}(\d+)$")
 PERMISSIONS_TEMPLATE = """realm ZERO
 {username}:{passphrase}"""
 
-ZEO_TEMPLATE = """<zeo>
+ZEO_TEMPLATE = """\
+<zeo>
   address {sock}
   authentication-protocol ecc_auth
   authentication-database {authdb}
@@ -41,10 +42,16 @@ ZEO_TEMPLATE = """<zeo>
 <filestorage>
   path {dbfile}
   pack-gc false
-</filestorage>"""
+</filestorage>
+"""
+
+PROXY_TEMPLATE = """\
+<zeo>
+  address {sock}
+</zeo>
+"""
 
 STUNNEL_SECTION = """
-
 <stunnel>
   stunnel-config {stunnel}
 </stunnel>
@@ -186,12 +193,14 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
         certfile_path = os.path.join(path, "conf", "server.crt")
         keyfile_path = os.path.join(path, "conf", "server.key")
         stunnel_server_path = os.path.join(path, "conf", "stunnel-server.conf")
+        stunnel_client_path = os.path.join(path, "conf", "stunnel-client.conf")
     else:
         authdb_path = os.path.join("conf", "authdb.conf")
         dbfile_path = os.path.join("db", "db.fs")
         certfile_path = os.path.join("conf", "server.crt")
         keyfile_path = os.path.join("conf", "server.key")
         stunnel_server_path = os.path.join("conf", "stunnel-server.conf")
+        stunnel_client_path = os.path.join("conf", "stunnel-client.conf")
 
     # stunnel pidfile paths must be absolute
     server_pidfile_path = os.path.join(path, "var", "stunnel-server.pid")
@@ -203,6 +212,7 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
     var_dir = os.path.join(path, "var")
     authdb_conf = os.path.join(conf_dir, "authdb.conf")
     zcml_conf = os.path.join(conf_dir, "server.zcml")
+    proxy_conf = os.path.join(conf_dir, "proxy.zcml")
     certfile = os.path.join(conf_dir, "server.crt")
     keyfile = os.path.join(conf_dir, "server.key")
     stunnel_server_conf = os.path.join(conf_dir, "stunnel-server.conf")
@@ -271,8 +281,14 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
             authdb=authdb_path,
             dbfile=dbfile_path)
 
-    stunnel_section_content = STUNNEL_SECTION.format(
+    proxy_content = PROXY_TEMPLATE.format(
+            sock=client_accept)
+
+    server_section_content = STUNNEL_SECTION.format(
             stunnel=stunnel_server_path)
+
+    client_section_content = STUNNEL_SECTION.format(
+            stunnel=stunnel_client_path)
 
     stunnel_server_content = STUNNEL_SERVER_TEMPLATE.format(
             pidfile=server_pidfile_path,
@@ -299,7 +315,15 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
         with open(zcml_conf, "w") as f:
             f.write(zcml_content)
             if stunnel:
-                f.write(stunnel_section_content)
+                f.write(server_section_content)
+
+    if stunnel:
+        if os.path.exists(proxy_conf):
+            click.echo("Skipping " + proxy_conf)
+        else:
+            with open(proxy_conf, "w") as f:
+                f.write(proxy_content)
+                f.write(client_section_content)
 
     if stunnel:
         if os.path.exists(stunnel_server_conf):
