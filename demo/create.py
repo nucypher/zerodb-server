@@ -23,33 +23,47 @@ print("Connected")
 # Create objects
 NUMOBJECTS = 1000
 REPORTFREQ = 100
+MAXRETRIES = 3
 
-# Everything we record should be within a transaction manager
-# or be ended with transaction.commit()
-print("Creating %d objects" % NUMOBJECTS)
-with transaction.manager:
-    for i in range(NUMOBJECTS):
-        if i % REPORTFREQ == 0 and i != 0:
-            # Random text generation is slow, so we report
-            # about progress here
-            print(i)
-        e = models.Employee(name=names.get_first_name(),
-                            surname=names.get_last_name(),
-                            salary=random.randrange(200000),
-                            description=loremipsum.get_paragraph(),
-                            extra=loremipsum.get_sentence())
-        db.add(e)  # Don't forget to add created object to the db
+import ZODB.POSException
+numretries = 0
+while True:
+    try:
+        # Everything we record should be within a transaction manager
+        # or be ended with transaction.commit()
+        print("Creating %d objects" % NUMOBJECTS)
+        with transaction.manager:
+            for i in range(NUMOBJECTS):
+                if i % REPORTFREQ == 0 and i != 0:
+                    # Random text generation is slow, so we report
+                    # about progress here
+                    print(i)
+                e = models.Employee(name=names.get_first_name(),
+                                    surname=names.get_last_name(),
+                                    salary=random.randrange(200000),
+                                    description=loremipsum.get_paragraph(),
+                                    extra=loremipsum.get_sentence())
+                db.add(e)  # Don't forget to add created object to the db
 
-    # One special record
-    desc = """A theoretical physicist, cosmologist,
+            # One special record
+            desc = """A theoretical physicist, cosmologist,
 author and Director of Research at the Centre for
 Theoretical Cosmology within the University of Cambridge,
 Stephen William Hawking resides in the United Kingdom."""
-    e = models.Employee(name="Stephen", surname="Hawking",
-                        salary=400000,
-                        description=desc)
-    db.add(e)  # Don't forget to add created object to the db
-    print("Committing")
+            e = models.Employee(name="Stephen", surname="Hawking",
+                                salary=400000,
+                                description=desc)
+            db.add(e)  # Don't forget to add created object to the db
+            print("Committing")
+    except ZODB.POSException.ConflictError:
+        numretries += 1
+        if numretries < MAXRETRIES:
+            print("Retrying after write conflict")
+        else:
+            print("Too many conflicts, giving up")
+            break
+    else:
+        break
 
 # This is not really necessary
 db.disconnect()
