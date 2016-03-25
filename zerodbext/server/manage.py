@@ -248,7 +248,7 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
     db_connect = sock
     server_accept = "9001"
     server_connect = "<server address>:9001"
-    client_accept = sock
+    client_accept = "localhost:8001"
 
     if stunnel:
         if stunnel_server is not None:
