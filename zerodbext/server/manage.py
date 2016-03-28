@@ -357,6 +357,105 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
 
 
 @cli.command()
+@click.option("--path", default=None, type=click.STRING, help="Path to db and configs")
+@click.option("--absolute-path/--no-absolute-path", default=False, help="Use absolute paths in configs")
+@click.option("--stunnel-server", default=None, type=click.STRING, help="stunnel server address:port")
+@click.option("--stunnel-client", default=None, type=click.STRING, help="stunnel client address:port")
+def init_proxy(path, absolute_path, stunnel_server, stunnel_client):
+    """
+    Initialize ZeroDB proxy if configs do not yet exist.
+    Creates conf/ directory with config files.
+    """
+    stunnel = stunnel_server is not None or stunnel_client is not None
+
+    # Base path
+    if path:
+        if not os.path.exists(path):
+            raise IOError("Path provided doesn't exist")
+        path = os.path.abspath(path)
+    else:
+        path = os.getcwd()
+
+    # Paths to be put into config files
+    if absolute_path:
+        certfile_path = os.path.join(path, "conf", "server.crt")
+        stunnel_client_path = os.path.join(path, "conf", "stunnel-client.conf")
+    else:
+        certfile_path = os.path.join("conf", "server.crt")
+        stunnel_client_path = os.path.join("conf", "stunnel-client.conf")
+
+    # stunnel pidfile paths must be absolute
+    client_pidfile_path = os.path.join(path, "var", "stunnel-client.pid")
+
+    # Directories and files to create
+    conf_dir = os.path.join(path, "conf")
+    var_dir = os.path.join(path, "var")
+    proxy_conf = os.path.join(conf_dir, "proxy.zcml")
+    certfile = os.path.join(conf_dir, "server.crt")
+    stunnel_client_conf = os.path.join(conf_dir, "stunnel-client.conf")
+
+    if os.path.exists(proxy_conf) or os.path.exists(stunnel_client_conf):
+        click.echo("Config files already exist, remove to recreate")
+
+    if not os.path.exists(conf_dir):
+        os.mkdir(conf_dir)
+
+    if stunnel:
+        if not os.path.exists(var_dir):
+            os.mkdir(var_dir)
+
+    # Sockets
+    server_connect = "<server address>:9001"
+    client_accept = "localhost:8001"
+
+    if stunnel:
+        if stunnel_server is not None:
+            server_connect = stunnel_server
+        if stunnel_client is not None:
+            client_accept = stunnel_client
+
+    # stunnel unix-socket paths must be absolute
+    if not re_hostport.match(server_connect):
+        server_connect = os.path.join(path, server_connect)
+    if not re_hostport.match(client_accept):
+        client_accept = os.path.join(path, client_accept)
+
+    proxy_content = PROXY_TEMPLATE.format(
+            sock=client_accept)
+
+    client_section_content = STUNNEL_SECTION.format(
+            stunnel=stunnel_client_path)
+
+    stunnel_client_content = STUNNEL_CLIENT_TEMPLATE.format(
+            pidfile=client_pidfile_path,
+            accept=client_accept,
+            connect=server_connect,
+            certfile=certfile_path)
+
+    if stunnel:
+        if os.path.exists(proxy_conf):
+            click.echo("Skipping " + proxy_conf)
+        else:
+            with open(proxy_conf, "w") as f:
+                f.write(proxy_content)
+                f.write(client_section_content)
+
+    if stunnel:
+        if os.path.exists(stunnel_client_conf):
+            click.echo("Skipping " + stunnel_client_conf)
+        else:
+            with open(stunnel_client_conf, "w") as f:
+                f.write(stunnel_client_content)
+
+    if os.path.exists(certfile):
+        click.echo("Config files created, you can start zerodb-proxy")
+    else:
+        click.echo("Config files created, "
+            "now copy server.crt from the ZeroDB server and place it in the conf directory")
+        click.echo("You can then start zerodb-proxy")
+
+
+@cli.command()
 def clear():
     """
     Remove all database files (including auth db)
