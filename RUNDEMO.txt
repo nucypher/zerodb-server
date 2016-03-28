@@ -3,22 +3,20 @@
 # to the proxy and do not need to know about stunnel at all.
 #
 
+git clone git@github.com:zero-db/zerodb
+cd zerodb
+git checkout stunnel-proxy
+cd ..
+
 git clone git@github.com:zero-db/zerodb-server
 cd zerodb-server
 git checkout stunnel-proxy-demo
 virtualenv-2.7 .
-./bin/python setup.py develop
+
+./bin/pip install -e .
+./bin/pip install -e ../zerodb
 ./bin/pip install -r demo/requirements.txt
 
-cd ..
-git clone git@github.com:zero-db/zerodb
-cd zerodb
-git checkout stunnel-proxy
-virtualenv-2.7 .
-./bin/python setup.py develop
-../zerodb-server/bin/python setup.py develop
-
-cd ../zerodb-server
 ./bin/zerodb-manage init_db \
 	--username=root \
 	--passphrase=123 \
