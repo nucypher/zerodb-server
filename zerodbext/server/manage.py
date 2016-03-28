@@ -170,8 +170,9 @@ def console():
 @click.option("--absolute-path/--no-absolute-path", default=False, help="Use absolute paths in configs")
 @click.option("--stunnel-server", default=None, type=click.STRING, help="stunnel server address:port")
 @click.option("--stunnel-client", default=None, type=click.STRING, help="stunnel client address:port")
+@click.option("--overwrite/--no-overwrite", default=False, help="Overwrite existing configs")
 @signup_options
-def init_db(path, absolute_path, stunnel_server, stunnel_client):
+def init_db(path, absolute_path, stunnel_server, stunnel_client, overwrite):
     """
     Initialize database if doesn't exist.
     Creates conf/ directory with config files and db/ with database files
@@ -309,7 +310,7 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
         with open(authdb_conf, "w") as f:
             f.write(authdb_content)
 
-    if os.path.exists(zcml_conf):
+    if os.path.exists(zcml_conf) and not overwrite:
         click.echo("Skipping " + zcml_conf)
     else:
         with open(zcml_conf, "w") as f:
@@ -318,7 +319,7 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
                 f.write(server_section_content)
 
     if stunnel:
-        if os.path.exists(proxy_conf):
+        if os.path.exists(proxy_conf) and not overwrite:
             click.echo("Skipping " + proxy_conf)
         else:
             with open(proxy_conf, "w") as f:
@@ -326,13 +327,13 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
                 f.write(client_section_content)
 
     if stunnel:
-        if os.path.exists(stunnel_server_conf):
+        if os.path.exists(stunnel_server_conf) and not overwrite:
             click.echo("Skipping " + stunnel_server_conf)
         else:
             with open(stunnel_server_conf, "w") as f:
                 f.write(stunnel_server_content)
 
-        if os.path.exists(stunnel_client_conf):
+        if os.path.exists(stunnel_client_conf) and not overwrite:
             click.echo("Skipping " + stunnel_client_conf)
         else:
             with open(stunnel_client_conf, "w") as f:
@@ -361,7 +362,8 @@ def init_db(path, absolute_path, stunnel_server, stunnel_client):
 @click.option("--absolute-path/--no-absolute-path", default=False, help="Use absolute paths in configs")
 @click.option("--stunnel-server", default=None, type=click.STRING, help="stunnel server address:port")
 @click.option("--stunnel-client", default=None, type=click.STRING, help="stunnel client address:port")
-def init_proxy(path, absolute_path, stunnel_server, stunnel_client):
+@click.option("--overwrite/--no-overwrite", default=False, help="Overwrite existing configs")
+def init_proxy(path, absolute_path, stunnel_server, stunnel_client, overwrite):
     """
     Initialize ZeroDB proxy if configs do not yet exist.
     Creates conf/ directory with config files.
@@ -433,7 +435,7 @@ def init_proxy(path, absolute_path, stunnel_server, stunnel_client):
             certfile=certfile_path)
 
     if stunnel:
-        if os.path.exists(proxy_conf):
+        if os.path.exists(proxy_conf) and not overwrite:
             click.echo("Skipping " + proxy_conf)
         else:
             with open(proxy_conf, "w") as f:
@@ -441,7 +443,7 @@ def init_proxy(path, absolute_path, stunnel_server, stunnel_client):
                 f.write(client_section_content)
 
     if stunnel:
-        if os.path.exists(stunnel_client_conf):
+        if os.path.exists(stunnel_client_conf) and not overwrite:
             click.echo("Skipping " + stunnel_client_conf)
         else:
             with open(stunnel_client_conf, "w") as f:
