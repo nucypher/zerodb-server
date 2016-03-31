@@ -1,24 +1,22 @@
 #
-# Start the stunnel client from zerodb.DB. Applications must provide
-# a stunnel configuration file.
+# Start the stunnel server from ZEOServer and the stunnel client from
+# zerodb.DB. Applications must provide stunnel configuration files.
 #
+
+git clone git@github.com:zero-db/zerodb
+cd zerodb
+git checkout stunnel-builtin
+cd ..
 
 git clone git@github.com:zero-db/zerodb-server
 cd zerodb-server
-git checkout stunnel-zcml-demo
+git checkout stunnel-builtin-demo
 virtualenv-2.7 .
-./bin/python setup.py develop
+
+./bin/pip install -e .
+./bin/pip install -e ../zerodb
 ./bin/pip install -r demo/requirements.txt
 
-cd ..
-git clone git@github.com:zero-db/zerodb
-cd zerodb
-git checkout stunnel-zcml
-virtualenv-2.7 .
-./bin/python setup.py develop
-../zerodb-server/bin/python setup.py develop
-
-cd ../zerodb-server
 ./bin/zerodb-manage init_db \
 	--username=root \
 	--passphrase=123 \
