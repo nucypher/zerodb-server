@@ -5,7 +5,6 @@ INSTALL_REQUIRES = [
     'click',
     'zerodb',
     'six',
-    'pystunnel'
 ]
 
 setup(
