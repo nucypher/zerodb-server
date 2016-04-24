@@ -2,9 +2,8 @@
 
 if [ ! -d ".venv" ]
 then
-    virtualenv .venv
+    virtualenv -p python2 .venv
     source .venv/bin/activate
-    pip install -r requirements.txt
     python setup.py develop
     ln -s .venv/bin/activate .
 else
