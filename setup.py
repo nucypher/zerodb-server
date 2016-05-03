@@ -1,15 +1,14 @@
 from setuptools import setup, find_packages
 
 INSTALL_REQUIRES = [
-    'ipython',
+    'ipython>=1.0.0',
     'click',
-    'zerodb',
-    'six',
+    'zerodb==0.97.6',
 ]
 
 setup(
     name="zerodb-server",
-    version="0.1.16",
+    version="0.1.23",
     description="ZeroDB server",
     author="ZeroDB Inc.",
     author_email="michael@zerodb.io",
@@ -18,8 +17,7 @@ setup(
     packages=find_packages(),
     namespace_packages=["zerodbext"],
     install_requires=INSTALL_REQUIRES,
-    entry_points=
-    {
+    entry_points={
         "console_scripts":
         [
             "zerodb-server = zerodbext.server.run:run",
