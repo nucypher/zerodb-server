@@ -1,5 +1,4 @@
+ipython>=1.0.0
 click
-ipython==4.1.2
-zerodb==0.97
-six
+zerodb==0.97.6
 pystunnel

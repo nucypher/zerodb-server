@@ -157,8 +157,7 @@ def console():
             ])
 
     DB.auth_module.register_auth()
-    DB.encrypter.register_class(default=True)
-    init_crypto(passphrase=_passphrase)
+    DB._init_default_crypto(passphrase=_passphrase)
 
     storage = client_storage(_sock,
             username=_username, password=_passphrase, realm="ZERO")
