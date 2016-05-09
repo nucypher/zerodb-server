@@ -27,17 +27,22 @@ _sock = None
 PERMISSIONS_TEMPLATE = """realm ZERO
 {username}:{passphrase}"""
 
-ZEO_TEMPLATE = """<zeo>
+ZEO_TEMPLATE = """\
+<zeo>
   address {sock}
   authentication-protocol ecc_auth
   authentication-database {authdb}
   authentication-realm ZERO
 </zeo>
 
-<filestorage>
-  path {dbfile}
+%import relstorage
+<relstorage>
+  <postgresql>
+    dsn dbname='zerodb01' user='zerodb01' password='123' host='localhost'
+  </postgresql>
   pack-gc false
-</filestorage>"""
+</relstorage>
+"""
 
 
 @click.group()
