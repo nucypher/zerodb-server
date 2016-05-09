@@ -4,6 +4,8 @@ INSTALL_REQUIRES = [
     'ipython>=1.0.0',
     'click',
     'zerodb==0.97.6',
+    'RelStorage==1.6.0b3',
+    'psycopg2==2.6.1',
 ]
 
 setup(
