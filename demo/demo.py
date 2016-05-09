@@ -2,10 +2,16 @@ import zerodb
 from zerodb.query import *
 from models import Employee
 
-PASSPHRASE = "very insecure passphrase - never use it"
+# Setup logging
+import logging
+logging.basicConfig()
+
+# Open ZeroDB connection
+USERNAME = "root"
+PASSPHRASE = "123"
 SOCKET = ("localhost", 8001)
 
-db = zerodb.DB(SOCKET, username="root", password=PASSPHRASE)
+db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE)
 print("Connected")
 
 print(len(db[Employee]))

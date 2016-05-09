@@ -7,15 +7,22 @@ import names
 import loremipsum
 import random
 
-username = "root"
-passphrase = "very insecure passphrase - never use it"
+# Setup logging
+import logging
+logging.basicConfig()
 
-db = zerodb.DB(("localhost", 8001), username=username, password=passphrase)
+# Open ZeroDB connection
+USERNAME = "root"
+PASSPHRASE = "123"
+SOCKET = ("localhost", 8001)
+
+db = zerodb.DB(SOCKET, username=USERNAME, password=PASSPHRASE)
+print("Connected")
 
 # Everything we record should be within a transaction manager
 # or be ended with transaction.commit()
 with transaction.manager:
-    for i in range(10000):
+    for i in range(1000):
         if (i % 100) == 0:
             # Random text generation is slow, so we report
             # about progress here
