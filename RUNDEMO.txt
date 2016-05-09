@@ -1,0 +1,26 @@
+sudo mkdir -p /opt/local/var/db/postgresql84/defaultdb
+sudo chown postgres:postgres /opt/local/var/db/postgresql84/defaultdb
+sudo su postgres -c '/opt/local/lib/postgresql84/bin/initdb -D /opt/local/var/db/postgresql84/defaultdb'
+sudo su postgres -c '/opt/local/lib/postgresql84/bin/pg_ctl -D /opt/local/var/db/postgresql84/defaultdb start'
+sudo su postgres -c '/opt/local/lib/postgresql84/bin/createuser --pwprompt --no-superuser --no-createdb --no-createrole zerodb01'
+sudo su postgres -c '/opt/local/lib/postgresql84/bin/createdb --owner zerodb01 zerodb01'
+
+git clone git@github.com:zero-db/zerodb-server
+cd zerodb-server
+git checkout relstorage
+virtualenv-2.7 .
+
+./bin/pip install -e .
+./bin/pip install -r demo/requirements.txt
+
+./bin/zerodb-manage init_db \
+	--username=root \
+	--passphrase=123 \
+	--sock=localhost:8001
+
+First terminal:
+./bin/zerodb-server
+
+Second terminal:
+./bin/python demo/create.py
+./bin/python demo/demo.py
