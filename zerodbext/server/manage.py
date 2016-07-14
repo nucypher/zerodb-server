@@ -7,6 +7,7 @@ Management console
 import binascii
 import click
 import logging
+import sys
 
 import os.path
 
@@ -17,7 +18,6 @@ from functools import update_wrapper
 from zerodb import DB
 from zerodb.crypto import ecc
 from zerodb.permissions import elliptic
-from zerodb.storage import client_storage
 
 logging.basicConfig()
 
@@ -124,11 +124,11 @@ def console():
             "get_pubkey(username, password) - get public key from passphrase",
             "exit() or ^D - exit"])
 
-    DB.auth_module.register_auth()
-    DB._init_default_crypto(passphrase=_passphrase)
+    db = DB(_sock, username=_username, password=_passphrase, realm=_realm)
+    storage = db._storage
 
-    storage = client_storage(
-            _sock, username=_username, password=_passphrase, realm=_realm)
+    sys.path.append(".")
+
     embed(banner1=banner)
 
 

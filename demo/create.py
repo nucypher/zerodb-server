@@ -15,7 +15,7 @@ db = zerodb.DB(("localhost", 8001), username=username, password=passphrase)
 # Everything we record should be within a transaction manager
 # or be ended with transaction.commit()
 with transaction.manager:
-    for i in range(10000):
+    for i in range(400):
         if (i % 100) == 0:
             # Random text generation is slow, so we report
             # about progress here
