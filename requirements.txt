@@ -1,3 +1,4 @@
 ipython>=1.0.0
 click
+zope.interface>=4.2.0
 zerodb==0.98.0
