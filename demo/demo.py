@@ -5,7 +5,11 @@ from models import Employee
 PASSPHRASE = "very insecure passphrase - never use it"
 SOCKET = ("localhost", 8001)
 
-db = zerodb.DB(SOCKET, username="root", password=PASSPHRASE)
+db = zerodb.DB(
+    ("localhost", 8001),
+    cert_file='client.pem', key_file='client_key.pem', server_cert='server.pem',
+    password=PASSPHRASE)
+
 print("Connected")
 
 print(len(db[Employee]))

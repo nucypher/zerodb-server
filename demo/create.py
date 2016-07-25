@@ -10,7 +10,10 @@ import random
 username = "root"
 passphrase = "very insecure passphrase - never use it"
 
-db = zerodb.DB(("localhost", 8001), username=username, password=passphrase)
+db = zerodb.DB(
+    ("localhost", 8001),
+    cert_file='client.pem', key_file='client_key.pem', server_cert='server.pem',
+    password=passphrase)
 
 # Everything we record should be within a transaction manager
 # or be ended with transaction.commit()

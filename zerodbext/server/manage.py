@@ -15,26 +15,35 @@ import six
 from IPython import embed
 from functools import update_wrapper
 
+import ZODB.FileStorage
+
 from zerodb import DB
 from zerodb.crypto import ecc
-from zerodb.permissions import elliptic
+from zerodb.crypto import elliptic
+from zerodb.permissions import base
 
 logging.basicConfig()
 
 _username = None
 _passphrase = None
 _sock = None
-_realm = None
-kdf = elliptic.Client.kdf
+_server_certificate = None
+_server_key = None
+_user_certificate = None
+_realm = 'ZERODB' # why?
+
+kdf = elliptic.kdf
 
 PERMISSIONS_TEMPLATE = """realm {realm}
 auth_secp256k1_scrypt:{username}:{passphrase}"""
 
 ZEO_TEMPLATE = """<zeo>
   address {sock}
-  authentication-protocol auth_secp256k1_scrypt
-  authentication-database {authdb}
-  authentication-realm {realm}
+  <ssl>
+    certificate {certificate}
+    key {key}
+    authenticate DYNAMIC
+  </ssl>
 </zeo>
 
 <filestorage>
@@ -60,6 +69,14 @@ def cli():
 def _auth_options(f, confirm_passphrase=True):
     """Decorator to enable username, passphrase and sock options to command"""
     @click.option(
+        "--server-certificate", prompt="Server certificate",
+        type=click.STRING,
+        help="Server certificate file path (.pem)")
+    @click.option(
+        "--server-key", prompt="Server key",
+        type=click.STRING,
+        help="Server certificate key file path (.pem)")
+    @click.option(
             "--username", prompt="Username", default="root", type=click.STRING,
             help="Admin username")
     @click.option(
@@ -69,18 +86,26 @@ def _auth_options(f, confirm_passphrase=True):
     @click.option(
             "--sock", prompt="Sock", default="localhost:8001",
             type=click.STRING, help="Storage server socket (TCP or UNIX)")
-    @click.option("--realm", default="ZERO", type=click.STRING,
-                  help="Authentication realm")
+    @click.option(
+        "--user-certificate", prompt="User certificate",
+        type=click.STRING,
+        help="User certificate file path (.pem)")
     @click.pass_context
-    def auth_func(ctx, username, passphrase, sock, realm, *args, **kw):
+    def auth_func(ctx, server_certificate, server_key,
+                  username, passphrase, sock, user_certificate,
+                  *args, **kw):
         global _username
         global _passphrase
         global _sock
-        global _realm
+        global _server_certificate
+        global _server_key
+        global _user_certificate
 
-        _realm = str(realm)
         _username = str(username)
         _passphrase = str(passphrase)
+        _server_certificate = str(server_certificate)
+        _server_key = str(server_key)
+        _user_certificate = str(user_certificate)
 
         if sock.startswith("/"):
             _sock = sock
@@ -133,8 +158,10 @@ def console():
 
 
 @cli.command()
-@click.option("--path", default=None, type=click.STRING, help="Path to db and configs")
-@click.option("--absolute-path/--no-absolute-path", default=False, help="Use absolute paths in configs")
+@click.option("--path", default=None, type=click.STRING,
+              help="Path to db and configs")
+@click.option("--absolute-path/--no-absolute-path", default=False,
+              help="Use absolute paths in configs")
 @signup_options
 def init_db(path, absolute_path):
     """
@@ -148,18 +175,15 @@ def init_db(path, absolute_path):
         path = os.getcwd()
 
     if absolute_path:
-        authdb_path = os.path.join(path, "conf", "authdb.conf")
         dbfile_path = os.path.join(path, "db", "db.fs")
     else:
-        authdb_path = os.path.join("conf", "authdb.conf")
         dbfile_path = os.path.join("db", "db.fs")
 
     conf_dir = os.path.join(path, "conf")
     db_dir = os.path.join(path, "db")
-    authdb_conf = os.path.join(conf_dir, "authdb.conf")
-    zcml_conf = os.path.join(conf_dir, "server.zcml")
+    server_conf = os.path.join(conf_dir, "server.conf")
 
-    if os.path.exists(authdb_conf) or os.path.exists(zcml_conf):
+    if os.path.exists(server_conf):
         raise IOError("Config files already exist, remove them or edit")
 
     if not os.path.exists(conf_dir):
@@ -168,21 +192,20 @@ def init_db(path, absolute_path):
         os.mkdir(db_dir)
 
     key = get_pubkey(_username, _passphrase)
-    authdb_content = PERMISSIONS_TEMPLATE.format(
-            username=_username,
-            passphrase=key,
-            realm=_realm)
-    zcml_content = ZEO_TEMPLATE.format(
-            sock=_sock if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock),
-            authdb=authdb_path,
-            dbfile=dbfile_path,
-            realm=_realm)
+    server_content = ZEO_TEMPLATE.format(
+        sock=_sock
+        if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock),
+        dbfile=dbfile_path,
+        certificate = _server_certificate,
+        key = _server_key,
+        )
 
-    with open(authdb_conf, "w") as f:
-        f.write(authdb_content)
+    with open(server_conf, "w") as f:
+        f.write(server_content)
 
-    with open(zcml_conf, "w") as f:
-        f.write(zcml_content)
+    with open(_user_certificate) as f:
+        pem_data = f.read()
+    base.init_db(ZODB.FileStorage.FileStorage(dbfile_path), _username, pem_data)
 
     click.echo("Config files created, you can start zerodb-server")
 

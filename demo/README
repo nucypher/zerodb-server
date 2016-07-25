@@ -3,17 +3,23 @@ Demo of how to use zerodb
 
 0. Install demo
 -----------------
-> virtualenv .demo           # optional
+> python3.5 -m venv .demo    # optional
 > source .demo/bin/activate  # optional
 > pip install -r requirements.txt
 
 1. Initialise database
 ------------------------
 > zerodb-manage init_db
-> username [root]: <CR>
-> passphrase: very insecure passphrase - never use it
+> Server certificate: server.pem
+> Server key: server_key.pem
+> Username [root]: <CR>
+> Passphrase: very insecure passphrase - never use it
+> Repeat for confirmation: very insecure passphrase - never use it
+> Sock [localhost:8001]: <CR>
+> User certificate: client.pem
 
-Username is "root" by default, no need to type it. We use this "insecure passphrase" for the demo").
+Username is "root" by default, no need to type it. We use this
+avoids"insecure passphrase" for the demo").
 
 File structure with configs and database get created.
 
