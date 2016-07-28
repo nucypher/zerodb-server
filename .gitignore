@@ -5,13 +5,13 @@ test.fs.*
 test.fs
 *.db
 *.db.*
+*.egg-info
 .ropeproject
 .coverage
 /.venv
-/server/db/db.fs*
 /activate
 /dist
 /build
-/zerodb_server.egg-info
-/demo/db
-/demo/conf
+/db
+/conf
+/share
