@@ -1,8 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import click
 from Crypto import Random
 from zerodb import api
+
+# Redo this XXX
 
 
 @click.command()

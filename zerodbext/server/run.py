@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """
 Simple script to run db server.
@@ -10,6 +10,7 @@ from os import getcwd, path
 from zerodb.permissions.subdb import ZEOServer
 
 DEFAULT_CONF_PATH = path.join(getcwd(), "conf", "server.conf")
+
 
 @click.command()
 @click.option("--confpath", default=DEFAULT_CONF_PATH, help="Path to config file")

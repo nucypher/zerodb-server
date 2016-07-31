@@ -4,11 +4,13 @@ INSTALL_REQUIRES = [
     'ipython>=1.0.0',
     'click',
     'zerodb>=0.99.0a1',
+    'PyOpenSSL',
+    'ecdsa'
 ]
 
 setup(
     name="zerodb-server",
-    version="0.1.25",
+    version="0.2.0a1",
     description="ZeroDB server",
     author="ZeroDB Inc.",
     author_email="michael@zerodb.io",
@@ -22,7 +24,7 @@ setup(
         [
             "zerodb-server = zerodbext.server.run:run",
             "zerodb-manage = zerodbext.server.manage:cli",
-            "zerodb-api = zerodbext.server.api:run"
+            # "zerodb-api = zerodbext.server.api:run"
         ]
     }
 )

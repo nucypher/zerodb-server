@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """
 Management console
@@ -18,8 +18,6 @@ from functools import update_wrapper
 import ZODB.FileStorage
 
 from zerodb import DB
-from zerodb.crypto import ecc
-from zerodb.crypto import elliptic
 from zerodb.permissions import base
 
 logging.basicConfig()
@@ -30,12 +28,6 @@ _sock = None
 _server_certificate = None
 _server_key = None
 _user_certificate = None
-_realm = 'ZERODB' # why?
-
-kdf = elliptic.kdf
-
-PERMISSIONS_TEMPLATE = """realm {realm}
-auth_secp256k1_scrypt:{username}:{passphrase}"""
 
 ZEO_TEMPLATE = """<zeo>
   address {sock}
@@ -50,15 +42,6 @@ ZEO_TEMPLATE = """<zeo>
   path {dbfile}
   pack-gc false
 </filestorage>"""
-
-
-def get_pubkey(username, password):
-    pub = ecc.private(
-            str(password), (str(username), str(_realm)), kdf=kdf).get_pubkey()
-    if six.PY2:
-        return pub.encode("hex")
-    else:
-        return pub.hex()
 
 
 @click.group()
@@ -131,6 +114,7 @@ def console():
     Console for managing users (add, remove, change password)
     """
 
+    # XXX redo all of these!!
     def useradd(username, pubkey):
         storage.add_user(username, binascii.unhexlify(pubkey))
 
@@ -149,7 +133,7 @@ def console():
             "get_pubkey(username, password) - get public key from passphrase",
             "exit() or ^D - exit"])
 
-    db = DB(_sock, username=_username, password=_passphrase, realm=_realm)
+    db = DB(_sock, username=_username, password=_passphrase)
     storage = db._storage
 
     sys.path.append(".")
@@ -191,13 +175,12 @@ def init_db(path, absolute_path):
     if not os.path.exists(db_dir):
         os.mkdir(db_dir)
 
-    key = get_pubkey(_username, _passphrase)
     server_content = ZEO_TEMPLATE.format(
         sock=_sock
         if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock),
         dbfile=dbfile_path,
-        certificate = _server_certificate,
-        key = _server_key,
+        certificate=_server_certificate,
+        key=_server_key,
         )
 
     with open(server_conf, "w") as f:
@@ -205,7 +188,10 @@ def init_db(path, absolute_path):
 
     with open(_user_certificate) as f:
         pem_data = f.read()
-    base.init_db(ZODB.FileStorage.FileStorage(dbfile_path), _username, pem_data)
+
+    base.init_db(ZODB.FileStorage.FileStorage(dbfile_path),
+                 uname=_username, password=_passphrase,
+                 pem_data=pem_data)
 
     click.echo("Config files created, you can start zerodb-server")
 
