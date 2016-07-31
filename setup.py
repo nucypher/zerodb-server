@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 INSTALL_REQUIRES = [
     'ipython>=1.0.0',
     'click',
-    'zerodb',
+    'zerodb>=0.99.0a1',
 ]
 
 setup(
