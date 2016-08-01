@@ -26,5 +26,8 @@ setup(
             "zerodb-manage = zerodbext.server.manage:cli",
             # "zerodb-api = zerodbext.server.api:run"
         ]
-    }
+    },
+    classifiers=[
+        "Development Status :: 3 - Alpha"
+        ]
 )

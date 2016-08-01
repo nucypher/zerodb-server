@@ -2,13 +2,11 @@ import zerodb
 from zerodb.query import *
 from models import Employee
 
-PASSPHRASE = "very insecure passphrase - never use it"
 SOCKET = ("localhost", 8001)
 
 db = zerodb.DB(
-    ("localhost", 8001),
-    cert_file='client.pem', key_file='client_key.pem', server_cert='server.pem',
-    password=PASSPHRASE)
+    ("localhost", 8001), username='root', password='root-password',
+    server_cert='server.pem')
 
 print("Connected")
 
