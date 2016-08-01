@@ -13,6 +13,9 @@ def generate_cert(curve=DEFAULT_CURVE, CN="zerodb.com"):
     ecdsa_key = ecdsa.SigningKey.generate(curve)
     k = crypto.load_privatekey(crypto.FILETYPE_PEM, ecdsa_key.to_pem())
 
+    # k = crypto.PKey()
+    # k.generate_key(crypto.TYPE_RSA, 4096)
+
     # create a self-signed cert
     cert = crypto.X509()
     cert.get_subject().CN = CN
