@@ -19,6 +19,7 @@ import ZODB.FileStorage
 
 from zerodb import DB
 from zerodb.permissions import base
+from zerodbext.server.cert import generate_cert
 
 logging.basicConfig()
 
@@ -49,15 +50,17 @@ def cli():
     pass
 
 
+# XXX make this more convenient, e.g.
+# Generate server certificate [Y/n] etc
 def _auth_options(f, confirm_passphrase=True):
     """Decorator to enable username, passphrase and sock options to command"""
     @click.option(
         "--server-certificate", prompt="Server certificate",
-        type=click.STRING,
+        type=click.STRING, default="",
         help="Server certificate file path (.pem)")
     @click.option(
         "--server-key", prompt="Server key",
-        type=click.STRING,
+        type=click.STRING, default="",
         help="Server certificate key file path (.pem)")
     @click.option(
             "--username", prompt="Username", default="root", type=click.STRING,
@@ -65,13 +68,13 @@ def _auth_options(f, confirm_passphrase=True):
     @click.option(
             "--passphrase", prompt="Passphrase", hide_input=True,
             confirmation_prompt=confirm_passphrase, type=click.STRING,
-            help="Admin passphrase or hex private key")
+            default="", help="Admin passphrase")
     @click.option(
             "--sock", prompt="Sock", default="localhost:8001",
             type=click.STRING, help="Storage server socket (TCP or UNIX)")
     @click.option(
         "--user-certificate", prompt="User certificate",
-        type=click.STRING,
+        type=click.STRING, default="",
         help="User certificate file path (.pem)")
     @click.pass_context
     def auth_func(ctx, server_certificate, server_key,
@@ -84,11 +87,11 @@ def _auth_options(f, confirm_passphrase=True):
         global _server_key
         global _user_certificate
 
-        _username = str(username)
-        _passphrase = str(passphrase)
-        _server_certificate = str(server_certificate)
-        _server_key = str(server_key)
-        _user_certificate = str(user_certificate)
+        _username = username
+        _passphrase = passphrase or None
+        _server_certificate = server_certificate or None
+        _server_key = server_key or None
+        _user_certificate = user_certificate or None
 
         if sock.startswith("/"):
             _sock = sock
@@ -152,6 +155,10 @@ def init_db(path, absolute_path):
     Initialize database if doesn't exist.
     Creates conf/ directory with config files and db/ with database files
     """
+    global _server_key
+    global _server_certificate
+    global _user_certificate
+
     if path:
         if not os.path.exists(path):
             raise IOError("Path provided doesn't exist")
@@ -175,6 +182,17 @@ def init_db(path, absolute_path):
     if not os.path.exists(db_dir):
         os.mkdir(db_dir)
 
+    if not _server_key:
+        key_pem, cert_pem = generate_cert()
+        _server_key = os.path.join(conf_dir, "server_key.pem")
+        _server_certificate = os.path.join(conf_dir, "server.pem")
+
+        with open(_server_key, "w") as f:
+            f.write(key_pem)
+
+        with open(_server_certificate, "w") as f:
+            f.write(cert_pem)
+
     server_content = ZEO_TEMPLATE.format(
         sock=_sock
         if isinstance(_sock, six.string_types) else "{0}:{1}".format(*_sock),
@@ -186,8 +204,22 @@ def init_db(path, absolute_path):
     with open(server_conf, "w") as f:
         f.write(server_content)
 
-    with open(_user_certificate) as f:
-        pem_data = f.read()
+    if not _user_certificate and not _passphrase:
+        _user_certificate = os.path.join(conf_dir, "user.pem")
+        _user_key = os.path.join(conf_dir, "user_key.pem")
+        key_pem, cert_pem = generate_cert()
+
+        with open(_user_key, "w") as f:
+            f.write(key_pem)
+
+        with open(_user_certificate, "w") as f:
+            f.write(cert_pem)
+
+    if _user_certificate:
+        with open(_user_certificate) as f:
+            pem_data = f.read()
+    else:
+        pem_data = None
 
     base.init_db(ZODB.FileStorage.FileStorage(dbfile_path),
                  uname=_username, password=_passphrase,
