@@ -21,7 +21,7 @@ def generate_cert(curve=DEFAULT_CURVE, CN="zerodb.com"):
     cert.get_subject().CN = CN
     cert.set_serial_number(serial)
     cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notBefore(10 * 365 * 86400)  # 10 years
+    cert.gmtime_adj_notAfter(10 * 365 * 86400)  # 10 years
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
     cert.sign(k, 'sha256')
