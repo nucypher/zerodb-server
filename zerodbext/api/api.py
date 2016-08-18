@@ -2,9 +2,11 @@
 
 import click
 
+import codecs
 import falcon
 import json
 import meinheld
+import transaction
 
 import imp
 import inspect
@@ -15,23 +17,86 @@ import zerodb
 
 version = '1.0'
 DEFAULT_CONFIG = os.path.join(os.path.dirname(__file__), 'default_conf.py')
+reader = codecs.getreader('utf-8')
 db = None
 models = None
 
 
-class RootResource:
-    def on_get(self, req, resp):
+def exception_handler(e, req, resp, params):
+    resp.body = json.dumps({
+        'ok': 0,
+        'message': str(e),
+        'error_type': e.__class__.__name__
+        })
+    resp.status = falcon.HTTP_500
+
+
+class JSONResource:
+    on_get_json = None
+    on_post_json = None
+    requires_data = False
+
+    def on_get(self, req, resp, **kw):
+        if self.on_get_json is None:
+            raise falcon.HTTPBadRequest(
+                'Bad request', 'GET method is not allowed')
+        else:
+            if self.requires_data:
+                stream = json.load(reader(req.stream))
+            else:
+                stream = None
+            out = self.on_get_json(stream, resp, *kw)
+            out.update({'ok': 1})
+            resp.body = json.dumps(out)
+
+    def on_post(self, req, resp, **kw):
+        if self.on_post_json is None:
+            raise falcon.HTTPBadRequest(
+                'Bad request', 'POST method is not allowed')
+        else:
+            if self.requires_data:
+                stream = json.load(reader(req.stream))
+            else:
+                stream = None
+            out = self.on_post_json(stream, resp, **kw)
+            out.update({'ok': 1})
+            resp.body = json.dumps(out)
+
+
+class RootResource(JSONResource):
+    requires_data = False
+
+    def on_get_json(self, req, resp):
         classes = [k for k, v in models.__dict__.items()
                    if inspect.isclass(v) and
                    issubclass(v, zerodb.models.Model) and
                    v is not zerodb.models.Model]
-        links = [{'href': '/' + c, 'rel': 'list', 'method': 'GET'}
-                 for c in classes]
-        resp.body = json.dumps(links)
+        return {'links': [{
+                    'href': '/' + c,
+                    'rel': 'list',
+                    'method': 'GET'}
+                 for c in classes]}
+
+
+class InsertResource(JSONResource):
+    requires_data = True
+
+    def on_post_json(self, stream, resp, name):
+        model = getattr(models, name)
+        if stream:
+            data = stream.get('docs', [])
+        else:
+            data = []
+        objs = [model(**row) for row in data]
+        with transaction.manager:
+            oids = [{'$oid': db.add(o)} for o in objs]
+        return {'oids': oids}
 
 
 api = falcon.API()
 api.add_route('/', RootResource())
+api.add_route('/{name}/_insert', InsertResource())
+api.add_error_handler(Exception, exception_handler)
 
 
 @click.command()
