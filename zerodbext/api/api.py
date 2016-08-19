@@ -176,7 +176,7 @@ class FindResource(JSONResource):
         finally:
             transaction.abort()
 
-        return {'results': [r.__dict__ for r in result]}
+        return {'results': [r.__dict__ for r in result], 'count': len(result)}
 
     def on_get_json(self, stream, resp, name):
         return self._run(stream, resp, name)
@@ -184,11 +184,51 @@ class FindResource(JSONResource):
     def on_post_json(self, stream, resp, name):
         return self._run(stream, resp, name)
 
+
+class RemoveResource(JSONResource):
+    requires_data = True
+
+    def _run(self, stream, resp, name):
+        model = getattr(models, name)
+
+        criteria = stream.get('criteria')
+        ids = stream.get('_id')
+
+        with transaction.manager:
+            if criteria:
+                if isinstance(criteria, str):
+                    criteria = json.loads(criteria)
+
+                if isinstance(criteria, dict) and (len(criteria) == 1) and "_id" in criteria:
+                    ids = [c["$oid"] for c in criteria["_id"]]
+                else:
+                    ids = None
+                    criteria = optimize(qj.compile(criteria))
+                result = db[model].query(criteria)
+
+            elif ids:
+                ids = json.loads(ids)
+                result = db[model][ids]
+
+            else:
+                raise AttributeError("Not enough arguments")
+
+            count = db.remove(result)
+            return {'ok': 1, 'count': count}
+
+    def on_get_json(self, stream, resp, name):
+        return self._run(stream, resp, name)
+
+    def on_post_json(self, stream, resp, name):
+        return self._run(stream, resp, name)
+
+
 api = falcon.API()
 api.add_route('/', RootResource())
 api.add_route('/{name}/_insert', InsertResource())
 api.add_route('/{name}/_get', GetResource())
 api.add_route('/{name}/_find', FindResource())
+api.add_route('/{name}/_remove', RemoveResource())
 
 
 @click.command()
