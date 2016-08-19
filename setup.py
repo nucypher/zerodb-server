@@ -5,12 +5,15 @@ INSTALL_REQUIRES = [
     'click',
     'zerodb>=0.99.0a2',
     'PyOpenSSL',
-    'ecdsa'
+    'ecdsa',
+    'falcon',
+    'meinheld',
+    'zope.testing'
 ]
 
 setup(
     name="zerodb-server",
-    version="0.2.0a2",
+    version="0.2.0b1",
     description="ZeroDB server",
     author="ZeroDB Inc.",
     author_email="michael@zerodb.io",
@@ -24,7 +27,7 @@ setup(
         [
             "zerodb-server = zerodbext.server.run:run",
             "zerodb-manage = zerodbext.server.manage:cli",
-            # "zerodb-api = zerodbext.server.api:run"
+            "zerodb-api = zerodbext.api.api:run"
         ]
     },
     classifiers=[
