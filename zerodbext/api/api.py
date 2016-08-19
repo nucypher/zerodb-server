@@ -14,6 +14,8 @@ import logging
 import os
 
 import zerodb
+from zerodb.catalog.query import optimize
+from zerodb.catalog import query_json as qj
 
 version = '1.0'
 DEFAULT_CONFIG = os.path.join(os.path.dirname(__file__), 'default_conf.py')
@@ -41,13 +43,13 @@ class JSONResource:
             raise falcon.HTTPBadRequest(
                 'Bad request', 'GET method is not allowed')
         else:
-            if self.requires_data:
-                stream = json.load(reader(req.stream))
+            if self.requires_data and req.params:
+                stream = req.params
             else:
                 stream = None
-            out = self.on_get_json(stream, resp, *kw)
+            out = self.on_get_json(stream, resp, **kw) or {}
             out.update({'ok': 1})
-            resp.body = json.dumps(out)
+            resp.body = json.dumps(out, ensure_ascii=False)
 
     def on_post(self, req, resp, **kw):
         if self.on_post_json is None:
@@ -60,7 +62,7 @@ class JSONResource:
                 stream = None
             out = self.on_post_json(stream, resp, **kw)
             out.update({'ok': 1})
-            resp.body = json.dumps(out)
+            resp.body = json.dumps(out, ensure_ascii=False)
 
 
 class RootResource(JSONResource):
@@ -72,9 +74,9 @@ class RootResource(JSONResource):
                    issubclass(v, zerodb.models.Model) and
                    v is not zerodb.models.Model]
         return {'links': [{
-                    'href': '/' + c,
+                    'href': '/%s/_insert' % c,
                     'rel': 'list',
-                    'method': 'GET'}
+                    'method': 'POST'}
                  for c in classes]}
 
 
@@ -93,10 +95,100 @@ class InsertResource(JSONResource):
         return {'oids': oids}
 
 
+class GetResource(JSONResource):
+    requires_data = True
+
+    def _run(self, stream, resp, name):
+        model = getattr(models, name)
+        _id = int(stream['_id'])
+
+        try:
+            obj = db[model][_id]
+            obj._p_activate()
+        finally:
+            transaction.abort()
+        return {'results': [obj.__dict__]}
+
+    def on_get_json(self, stream, resp, name):
+        return self._run(stream, resp, name)
+
+    def on_post_json(self, stream, resp, name):
+        return self._run(stream, resp, name)
+
+
+class FindResource(JSONResource):
+    requires_data = True
+
+    def _run(self, stream, resp, name):
+        model = getattr(models, name)
+        criteria = stream['criteria']
+        if isinstance(criteria, str):
+            criteria = json.loads(criteria)
+
+        if isinstance(criteria, dict) and (len(criteria) == 1) and "_id" in criteria:
+            ids = [c["$oid"] for c in criteria["_id"]]
+        else:
+            ids = None
+            criteria = optimize(qj.compile(criteria))
+
+        skip = stream.get("skip")
+        if skip:
+            skip = int(skip)
+
+        limit = stream.get("limit")
+        if limit:
+            limit = int(limit)
+
+        sort = stream.get("sort")
+        if sort:
+            try:
+                sort = json.loads(sort)
+            except ValueError:
+                if sort.startswith("-"):
+                    sort_index = sort[1:].strip()
+                    reverse = True
+                else:
+                    sort_index = sort
+                    reverse = None
+            if isinstance(sort, dict):
+                assert len(sort) == 1  # Only one field at the moment
+                sort_index, direction = sort.popitem()
+                reverse = (direction >= 0)
+            elif isinstance(sort, list):
+                sort_index = sort[0]
+                reverse = None
+        else:
+            sort_index = None
+            reverse = None
+
+        try:
+            if ids:
+                skip = skip or 0
+                end = skip + limit if limit else None
+                ids = ids[skip:end]
+                result = db[model][ids]
+            else:
+                result = db[model].query(
+                        criteria, skip=skip, limit=limit, sort_index=sort_index,
+                        reverse=reverse)
+            for obj in result:
+                obj._p_activate()
+        finally:
+            transaction.abort()
+
+        return {'results': [r.__dict__ for r in result]}
+
+    def on_get_json(self, stream, resp, name):
+        return self._run(stream, resp, name)
+
+    def on_post_json(self, stream, resp, name):
+        return self._run(stream, resp, name)
+
 api = falcon.API()
 api.add_route('/', RootResource())
 api.add_route('/{name}/_insert', InsertResource())
-api.add_error_handler(Exception, exception_handler)
+api.add_route('/{name}/_get', GetResource())
+api.add_route('/{name}/_find', FindResource())
 
 
 @click.command()
@@ -121,13 +213,13 @@ def run(config):
             key_file=getattr(conf, 'client_key', None),
             wait_timeout=getattr(conf, 'wait_timeout', 10))
 
-    meinheld.set_access_logger(None)
+    if not conf.debug:
+        api.add_error_handler(Exception, exception_handler)
+        meinheld.set_access_logger(None)
     meinheld.server.listen(conf.api_sock)
     print('Running API server at %s:%s' % conf.api_sock)
     meinheld.server.run(api)
     # TODO gunicorn
-
-# json.dumps(obj.__dict__, ensure_ascii=False) - fast!
 
 
 if __name__ == "__main__":

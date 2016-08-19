@@ -8,3 +8,4 @@ models = 'models.py'
 client_key = testssl.client_key         # If set, use cert-based auth
 client_cert = testssl.client_cert       # If set, use cert-based auth
 server_cert = testssl.server_cert       # If absent, we rely on CA
+debug = True
