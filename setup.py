@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 INSTALL_REQUIRES = [
     'ipython>=1.0.0',
     'click',
-    'zerodb>=0.99.0a2',
+    'zerodb>=0.99.0b1',
     'PyOpenSSL',
     'ecdsa',
     'falcon',
