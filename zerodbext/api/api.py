@@ -12,6 +12,7 @@ import imp
 import inspect
 import logging
 import os
+from itertools import chain
 
 import zerodb
 from zerodb.catalog.query import optimize
@@ -73,11 +74,22 @@ class RootResource(JSONResource):
                    if inspect.isclass(v) and
                    issubclass(v, zerodb.models.Model) and
                    v is not zerodb.models.Model]
-        return {'links': [{
-                    'href': '/%s/_insert' % c,
-                    'rel': 'list',
-                    'method': 'POST'}
-                 for c in classes]}
+        return {'links': list(chain(*[
+            [
+                {'href': '/%s/_insert' % c,
+                 'rel': 'list',
+                 'method': 'POST'},
+                {'href': '/%s/_get' % c,
+                 'rel': 'list',
+                 'method': ['GET', 'POST']},
+                {'href': '/%s/_find' % c,
+                 'rel': 'list',
+                 'method': ['GET', 'POST']},
+                {'href': '/%s/_remove' % c,
+                 'rel': 'list',
+                 'method': ['GET', 'POST']}
+            ]
+            for c in classes]))}
 
 
 class InsertResource(JSONResource):
