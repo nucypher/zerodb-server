@@ -219,7 +219,8 @@ class RemoveResource(JSONResource):
                 result = db[model].query(criteria)
 
             elif ids:
-                ids = json.loads(ids)
+                if isinstance(ids, str):
+                    ids = json.loads(ids)
                 result = db[model][ids]
 
             else:
